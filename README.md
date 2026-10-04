@@ -9,8 +9,13 @@ scopes come from the API's official discovery document.
 
 ## Setup (one time)
 
-1. **Google Cloud project.** In the [Google Cloud console](https://console.cloud.google.com/),
-   create a project and enable the **Google Health API**.
+1. **Google Cloud project.** This repo uses the GCP project `persona-adkaspar`.
+   Enable the **Google Health API** on it, either in the
+   [console](https://console.cloud.google.com/apis/library/health.googleapis.com?project=persona-adkaspar)
+   or with:
+   ```bash
+   gcloud services enable health.googleapis.com --project persona-adkaspar
+   ```
 2. **OAuth consent screen.** Set it to *External*, leave it in *Testing*, and
    add your own Google account (the one your Fitbit is linked to) as a test user.
 3. **OAuth client.** Go to *Credentials → Create credentials → OAuth client ID →
