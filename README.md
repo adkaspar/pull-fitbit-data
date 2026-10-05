@@ -32,6 +32,10 @@ scopes come from the API's official discovery document.
    fitbit-pull devices   # quick check: should list your Fitbit
    ```
 
+   No browser on this machine (e.g. a server)? Use `fitbit-pull login --manual`,
+   open the printed link anywhere, then pass the `localhost` URL your browser
+   lands on to `fitbit-pull login --redirect-url '<url>'`.
+
 > While the consent screen is in *Testing*, Google expires refresh tokens after
 > 7 days. If a pull fails with an auth error, run `fitbit-pull login` again.
 
@@ -51,7 +55,16 @@ fitbit-pull pull --types sleep,heart-rate,daily-heart-rate-variability --start 2
 fitbit-pull export-csv
 
 fitbit-pull types     # list every supported data type
+
+# One summary row per day (sleep, steps, distance, zone minutes, resting HR)
+fitbit-pull pull --reconciled --types steps,distance,active-zone-minutes,daily-resting-heart-rate,sleep --start 2023-01-01
+fitbit-pull daily     # writes data/daily.csv
 ```
+
+`--reconciled` asks Google to merge overlapping sources the way the Fitbit app
+does. Without it, steps from your phone (via Health Connect) are added on top of
+your watch's, double counting. `daily` files each night's main sleep under the
+date you woke up.
 
 Output:
 
