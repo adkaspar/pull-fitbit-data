@@ -57,13 +57,19 @@ class HealthClient:
             raise ApiError(f"HTTP {resp.status_code} for {path}: {_error_detail(resp)}")
         raise AssertionError("unreachable")
 
-    def list_points(self, dt: DataType, start: date, end: date) -> Iterator[dict[str, Any]]:
-        """Yield raw data points of `dt` in [start, end), following pagination."""
+    def list_points(
+        self, dt: DataType, start: date, end: date, reconcile: bool = False
+    ) -> Iterator[dict[str, Any]]:
+        """Yield data points of `dt` in [start, end), following pagination.
+
+        With `reconcile`, Google merges overlapping sources (e.g. watch and phone
+        step counts) into one stream, like the Fitbit app does.
+        """
         params: dict[str, Any] = {
             "pageSize": 25 if dt.key in SESSION_TYPES else 10000,
             "filter": build_filter(dt, start, end),
         }
-        path = f"users/me/dataTypes/{dt.key}/dataPoints"
+        path = f"users/me/dataTypes/{dt.key}/dataPoints" + (":reconcile" if reconcile else "")
         end_literal = _literal(dt.kind, end)
         while True:
             page = self._get(path, params)

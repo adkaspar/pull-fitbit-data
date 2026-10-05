@@ -2,8 +2,9 @@
 
 Layout under the output directory:
 
-    raw/<data-type>/<YYYY-MM>.jsonl   one raw API data point per line
-    state.json                        {data-type: end date of last completed pull}
+    raw/<data-type>/<YYYY-MM>.jsonl          one raw API data point per line
+    reconciled/<data-type>/<YYYY-MM>.jsonl   same, with sources merged (--reconciled)
+    state.json, state-reconciled.json        {data-type: end date of last completed pull}
 
 Each month file is rewritten whole, so re-pulling a month is idempotent.
 """
@@ -54,12 +55,14 @@ def pull(
     out_dir: Path,
     start: date | None,
     end: date,
+    reconcile: bool = False,
 ) -> dict[str, int]:
     """Pull each type from `start` (or where the last run ended) up to `end`.
 
     Returns the number of data points written per type.
     """
-    state = State(out_dir / "state.json")
+    kind = "reconciled" if reconcile else "raw"
+    state = State(out_dir / ("state-reconciled.json" if reconcile else "state.json"))
     counts: dict[str, int] = {}
     for dt in types:
         type_start = start or state.last_end(dt.key)
@@ -69,8 +72,8 @@ def pull(
             )
         total = 0
         for chunk_start, chunk_end in month_chunks(type_start, end):
-            points = _dedupe(client.list_points(dt, chunk_start, chunk_end))
-            path = out_dir / "raw" / dt.key / f"{chunk_start:%Y-%m}.jsonl"
+            points = _dedupe(client.list_points(dt, chunk_start, chunk_end, reconcile))
+            path = out_dir / kind / dt.key / f"{chunk_start:%Y-%m}.jsonl"
             _write_jsonl(path, points)
             total += len(points)
             log.info("%s %s: %d points", dt.key, f"{chunk_start:%Y-%m}", len(points))
