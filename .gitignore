@@ -1,9 +1,10 @@
 # Secrets
 client_secret*.json
-token.json
+token*.json
 
 # Pulled health data
 data/
+records/
 
 __pycache__/
 *.egg-info/
