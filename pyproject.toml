@@ -1,13 +1,14 @@
 [project]
 name = "fitbit-pull"
 version = "0.1.0"
-description = "Pull your Fitbit data from the Google Health API into JSONL/CSV."
+description = "Pull your Fitbit data and your medical records from Google into files and FHIR."
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
     "requests>=2.31",
     "google-auth>=2.20",
     "google-auth-oauthlib>=1.0",
+    "anthropic>=1.11",
 ]
 
 [project.optional-dependencies]
@@ -15,10 +16,11 @@ test = ["pytest>=7"]
 
 [project.scripts]
 fitbit-pull = "fitbit_pull.cli:main"
+health-records = "health_records.cli:main"
 
 [build-system]
 requires = ["setuptools>=61"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-packages = ["fitbit_pull"]
+packages = ["fitbit_pull", "health_records"]

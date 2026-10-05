@@ -19,12 +19,10 @@ def login(client_secret: Path, token_path: Path, scopes: list[str], port: int = 
     return creds
 
 
-def load(token_path: Path) -> Credentials:
+def load(token_path: Path, login_command: str = "fitbit-pull login") -> Credentials:
     """Load cached credentials, refreshing the access token if it has expired."""
     if not token_path.exists():
-        raise FileNotFoundError(
-            f"No token at {token_path}. Run `fitbit-pull login` first."
-        )
+        raise FileNotFoundError(f"No token at {token_path}. Run `{login_command}` first.")
     creds = Credentials.from_authorized_user_file(str(token_path))
     if not creds.valid and creds.refresh_token:
         creds.refresh(Request())
