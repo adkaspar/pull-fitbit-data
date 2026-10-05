@@ -1,6 +1,7 @@
 """Command-line entry point: `fitbit-pull`."""
 
 import argparse
+import csv
 import json
 import logging
 import sys
@@ -12,6 +13,7 @@ from oauthlib.oauth2 import OAuth2Error
 from . import auth
 from .client import ApiError, HealthClient
 from .datatypes import DATA_TYPES, DEFAULT_TYPES, resolve, scopes_for
+from .daily import COLUMNS, summarize
 from .export import export_csv
 from .pull import pull
 
@@ -57,7 +59,7 @@ def cmd_devices(args: argparse.Namespace) -> None:
 
 def cmd_pull(args: argparse.Namespace) -> None:
     types = resolve(args.types)
-    counts = pull(_client(args), types, args.out, args.start, args.end)
+    counts = pull(_client(args), types, args.out, args.start, args.end, args.reconciled)
     for key, n in counts.items():
         print(f"{key:38} {n:>10,} points")
 
@@ -67,6 +69,16 @@ def cmd_export_csv(args: argparse.Namespace) -> None:
         n = export_csv(dt, args.out / "raw", args.out / "csv" / f"{dt.key}.csv")
         if n:
             print(f"{dt.key:38} {n:>10,} rows")
+
+
+def cmd_daily(args: argparse.Namespace) -> None:
+    rows = summarize(args.out / "reconciled")
+    path = args.out / "daily.csv"
+    with path.open("w", newline="") as fh:
+        writer = csv.DictWriter(fh, fieldnames=COLUMNS)
+        writer.writeheader()
+        writer.writerows(rows)
+    print(f"Wrote {len(rows)} days to {path}")
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -104,12 +116,18 @@ def main(argv: list[str] | None = None) -> int:
                    default=date.today() + timedelta(days=1),
                    help="YYYY-MM-DD, exclusive (default: tomorrow)")
     p.add_argument("--out", type=Path, default=Path("data"))
+    p.add_argument("--reconciled", action="store_true",
+                   help="merge overlapping sources (watch + phone) into <out>/reconciled")
     p.set_defaults(func=cmd_pull)
 
     p = sub.add_parser("export-csv", help="flatten pulled JSONL into <out>/csv/<type>.csv")
     p.add_argument("--types", type=_types_arg, help=types_help)
     p.add_argument("--out", type=Path, default=Path("data"))
     p.set_defaults(func=cmd_export_csv)
+
+    p = sub.add_parser("daily", help="summarize `pull --reconciled` data into <out>/daily.csv, one row per day")
+    p.add_argument("--out", type=Path, default=Path("data"))
+    p.set_defaults(func=cmd_daily)
 
     args = parser.parse_args(argv)
     logging.basicConfig(
