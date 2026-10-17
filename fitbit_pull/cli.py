@@ -11,7 +11,8 @@ from . import auth
 from .client import ApiError, HealthClient
 from .datatypes import DATA_TYPES, DEFAULT_TYPES, resolve, scopes_for
 from .export import export_csv
-from .pull import pull
+from .pull import State, pull
+from .readiness import BASELINE_DAYS, READINESS_TYPES, readiness
 
 
 def _types_arg(value: str) -> list[str]:
@@ -54,6 +55,16 @@ def cmd_export_csv(args: argparse.Namespace) -> None:
             print(f"{dt.key:38} {n:>10,} rows")
 
 
+def cmd_readiness(args: argparse.Namespace) -> None:
+    if args.pull:
+        types = resolve(READINESS_TYPES)
+        state = State(args.out / "state.json")
+        missing = [dt.key for dt in types if state.last_end(dt.key) is None]
+        start = args.date - timedelta(days=BASELINE_DAYS) if missing else None
+        pull(_client(args), types, args.out, start, date.today() + timedelta(days=1))
+    print(json.dumps(readiness(args.out / "raw", args.date), indent=2))
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="fitbit-pull", description="Pull your Fitbit data from the Google Health API."
@@ -91,6 +102,15 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--types", type=_types_arg, help=types_help)
     p.add_argument("--out", type=Path, default=Path("data"))
     p.set_defaults(func=cmd_export_csv)
+
+    p = sub.add_parser("readiness",
+                       help="energy level for a day from sleep, HRV and resting HR (JSON)")
+    p.add_argument("--date", type=date.fromisoformat, default=date.today(),
+                   help="YYYY-MM-DD wake date (default: today)")
+    p.add_argument("--pull", action="store_true",
+                   help="pull sleep/HRV/resting HR first (backfills a baseline if needed)")
+    p.add_argument("--out", type=Path, default=Path("data"))
+    p.set_defaults(func=cmd_readiness)
 
     args = parser.parse_args(argv)
     logging.basicConfig(

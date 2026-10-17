@@ -80,6 +80,22 @@ including them.
 Two rollup-only types, `total-calories` and `calories-in-heart-rate-zone`,
 aren't supported yet. They use the `dailyRollUp` endpoint instead of `list`.
 
+## Readiness (for planning)
+
+`readiness` compares a day's sleep, HRV and resting heart rate against your own
+30-day baseline and prints JSON with an energy `level` (`low`, `normal`, `high`
+or `unknown`) and the reasons. A planning agent can use it to lighten the day
+after a bad night.
+
+```bash
+fitbit-pull readiness --pull          # refresh sleep/HRV/resting HR, then score today
+fitbit-pull readiness --date 2026-10-01
+```
+
+It is a simple heuristic, not a medical measure. Under 5h of sleep, or two of
+"short sleep", "HRV 15%+ below baseline" and "resting HR 5+ bpm above baseline",
+counts as `low`.
+
 ## Development
 
 ```bash
