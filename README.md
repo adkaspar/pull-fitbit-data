@@ -109,6 +109,19 @@ It is a simple heuristic, not a medical measure. Under 5h of sleep, or two of
 "short sleep", "HRV 15%+ below baseline" and "resting HR 5+ bpm above baseline",
 counts as `low`.
 
+## Scheduled cloud sync
+
+A Claude scheduled task ("Fitbit daily sync", daily 07:29 America/Argentina/Cordoba)
+runs this branch in the cloud: it writes `token.json` from the environment
+variable `FITBIT_TOKEN_JSON`, runs `pull --reconciled` and `daily`, upserts the
+last 3 days into the Notion Health Log, and reports `readiness`. Setup,
+re-login and monitoring are documented in the
+[daily-planner-agent](https://github.com/adkaspar/daily-planner-agent/blob/main/docs/automation.md)
+repo.
+
+The OAuth consent screen is in production, so refresh tokens no longer expire
+after 7 days.
+
 ## Development
 
 ```bash
